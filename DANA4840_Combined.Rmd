@@ -83,7 +83,6 @@ boxplot(quality_of_sleep, col="pink", xlab="quality_of_sleep", ylab = " frequenc
 ```
 
 ## Stress Level
-
 ```{r}
 Stress_level <- sleep$Stress.Level
 mean(Stress_level) 
@@ -95,6 +94,20 @@ IQR(Stress_level)
 ```{r}
 boxplot(Stress_level, col="green", xlab="Stress Level", ylab = " frequency", main = "Distribution of Stress Level")
 ```
+
+## Sleep Duration
+```{r}
+Sleep_Duration <- sleep$Sleep.Duration
+mean(Sleep_Duration) 
+median(Sleep_Duration) 
+sd(Sleep_Duration)
+IQR(Sleep_Duration)
+
+```
+```{r}
+boxplot(Sleep_Duration, col="blue", xlab="Sleep Duration", ylab = " frequency", main = "Distribution of Sleep Duration")
+```
+
 # Objectives
 #1. How do sleep duration, quality of sleep, and sleep disorders vary across different demographic groups (gender, age, occupation)?
 
@@ -103,14 +116,14 @@ boxplot(Stress_level, col="green", xlab="Stress Level", ylab = " frequency", mai
 # Mean sleep duration and quality of sleep by gender
 aggregate(cbind(Sleep.Duration, Quality.of.Sleep) ~ Gender, data = sleep, FUN = mean)
 ```
-Interpretation: Sleep Duration and Quality: Females sleep more (7.23h) with better quality (7.66) than males (7.04h, 6.97 quality), indicating gender differences in sleep patterns.
+Interpretation: Females sleep more (7.23h) with better quality (7.66) than males (7.04h, 6.97 quality), indicating gender differences in sleep patterns.
 
 
 ```{r}
 # Sleep disorder prevalence by gender
 with(sleep, table(Gender, Sleep.Disorder))
 ```
-Interpretation: Sleep Disorder Prevalence: More females report insomnia and sleep apnea, but a higher number of males have no sleep disorder, highlighting gender differences in sleep health.
+Interpretation: More females report insomnia and sleep apnea, but a higher number of males have no sleep disorder, highlighting gender differences in sleep health.
 
 ## Summary Statistics by Age Group
 ```{r}
@@ -263,12 +276,16 @@ lm_sleep_duration <- lm(Sleep.Duration ~ Physical.Activity.Level + Stress.Level,
 # Summary of the model
 summary(lm_sleep_duration)
 ```
+Interpretation: For every unit increase in physical activity level, sleep duration increases by approximately 0.007 hours (about 25 seconds), this suggests that higher physical activity is associated with slightly longer sleep. While for every unit increase in stress level, sleep duration decreases by approximately 0.361 hours (about 22 minutes) which means that
+higher stress is linked to shorter sleep duration.
 
 ### Quality of Sleep
 ```{r}
 lm_quality_of_sleep <- lm(Quality.of.Sleep ~ Physical.Activity.Level + Stress.Level, data = sleep)
 summary(lm_quality_of_sleep)
 ```
+Interpretation: For every unit increase in physical activity level, the quality of sleep improves by approximately 0.009 (on the same 0 to 10 scale) which means that higher physical activity is associated with better sleep quality while for stress level, for every unit increase, the quality of sleep decreases by approximately 0.60 (on the same 0 to 10 scale). Elevated stress negatively impacts sleep quality significantly.
+
 ```{r}
 ggplot(sleep, aes(x = Physical.Activity.Level, y = Sleep.Duration, color = Stress.Level)) +
   geom_point() +
@@ -303,18 +320,23 @@ fviz_nbclust(df_sleep, kmeans, method = "wss") +
     geom_vline(xintercept = 3, linetype = 2)+
   labs(subtitle = "Elbow method")
 ```
+Interpretation: The graph suggests that the optimal number of clusters for the dataset using kmeans, according to the elbow method, is 3, as indicated by the inflection point on the curve where the rate of decrease in within-cluster sum of squares slows down significantly.
+
 ```{r}
 #pam
 fviz_nbclust(df_sleep, pam, method = "wss") +
     geom_vline(xintercept = 4, linetype = 2)+
   labs(subtitle = "Elbow method")
 ```
+Interpretation: The elbow method chart indicates that 4 clusters may be the optimal choice for partitioning the data using PAM clustering, as demonstrated by the elbow point where the within-cluster sum of squares begins to diminish more slowly.
+
 ```{r}
 #hierarchical
 fviz_nbclust(df_sleep, hcut, method = "wss") +
     geom_vline(xintercept = 4, linetype = 2)+
   labs(subtitle = "Elbow method")
 ```
+Interpretation: The graph illustrates that using hierarchical clustering, the optimal number of clusters for the dataset is likely 4, as determined by the point where the decrease in within-cluster sum of squares lessens after this number.
 
 ### Silhouette method
 ```{r}
@@ -322,16 +344,21 @@ fviz_nbclust(df_sleep, hcut, method = "wss") +
 fviz_nbclust(df_sleep, kmeans, method = "silhouette")+
   labs(subtitle = "Silhouette method")
 ```
+Interpretation: The silhouette method graph shows that the average silhouette width peaks at 6 clusters, suggesting that clustering the dataset into 6 groups provides the most separation and cohesion within the clusters.
+
 ```{r}
 #pam
 fviz_nbclust(df_sleep, pam, method = "silhouette")+
   labs(subtitle = "Silhouette method")
 ```
+Interpretation: The silhouette method suggests that using PAM clustering, the optimal number of clusters for the dataset is likely around 9, as this number yields the highest average silhouette width, indicating well-separated clusters.
+
 ```{r}
 #hierarchical
 fviz_nbclust(df_sleep, hcut, method = "silhouette")+
   labs(subtitle = "Silhouette method")
 ```
+Interpretation:The silhouette analysis for hierarchical clustering shows a steady increase in silhouette width with the number of clusters, peaking at 9 clusters, which may suggest that dividing the data into 9 clusters achieves the best structure and separation.
 
 ### Gap Statistic
 ```{r}
@@ -340,12 +367,15 @@ set.seed(123)
 fviz_nbclust(df_sleep, kmeans, nstart = 25,  method = "gap_stat", nboot = 500)+
   labs(subtitle = "Gap statistic method")
 ```
+Interpretation:The gap statistic method suggests that the optimal number of clusters for k-means clustering is around 10, as shown by the highest point on the graph where the gap statistic value plateaus.
+
 ```{r}
 #hcut
 set.seed(123)
 fviz_nbclust(df_sleep, hcut, nstart = 25,  method = "gap_stat", nboot = 500)+
   labs(subtitle = "Gap statistic method")
 ```
+Interpretation:Based on the gap statistic method, the graph indicates that the data could be best divided into 10 clusters using hierarchical clustering, as the gap statistic increases steadily before leveling off at this point.
 
 ## Choosing Best Algorithm
 ### Internal Measures
@@ -485,4 +515,4 @@ fviz_cluster(pam.res,
              ggtheme = theme_classic()
              )
 ```
-
+Interpretation: We can see that there are 5 clusters, each cluster may have a specific health implication such individuals with sedentary lifestyle, active individuals with good cardiovascular health, individuals with moderate phyiscal activity, individuals with lower cardiovascular demands, and individuals that are active with potential stress affecting heart rate.
