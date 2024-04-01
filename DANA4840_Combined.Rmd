@@ -479,14 +479,14 @@ print(km.res_sleep)
 Interpretation: The k-means clustering results in 6 groups with various sizes, showing distinct cluster centers for heart rate and daily steps. The clusters are quite differentiated with a high percentage (94%) of the total variance explained between them, indicating a strong clustering structure
 
 ```{r}
-ggplot(variables, aes(x = Heart.Rate, y = Daily.Steps, color = factor(cluster_sleep))) +
-  geom_point() +
-  labs(title = "Clustering based on Heart Rate and Daily Steps",
-       x = "Heart Rate",
-       y = "Daily Steps",
-       color = "Cluster") +
-  theme_minimal()
+fviz_cluster(km.res_sleep, data=df_sleep,
+             palette = c("red", "orange","yellow","green","blue","purple"), # color palette
+             ellipse.type = "t", # Concentration ellipse
+             repel = TRUE, # Avoid label overplotting (slow)
+             ggtheme = theme_classic()
+             )
 ```
+
 Interpretation: The scatter plot shows the distribution of individuals into six clusters based on their heart rate and daily steps, with clear differentiation among clusters suggesting distinct groupings based on these two health and activity metrics.
 
 ```{r}
@@ -507,12 +507,12 @@ Interpretation: The silhouette scores indicate that clusters 3 and 5 have high c
 ## PAM
 
 ```{r}
-pam.res <- pam(scaled_sleep, 5)
+pam.res <- pam(scaled_sleep, 6)
 fviz_cluster(pam.res, 
-             palette = c("red", "orange","yellow","green","blue"), # color palette
+             palette = c("red", "orange","yellow","green","blue","purple"), # color palette
              ellipse.type = "t", # Concentration ellipse
              repel = TRUE, # Avoid label overplotting (slow)
              ggtheme = theme_classic()
              )
 ```
-Interpretation: We can see that there are 5 clusters, each cluster may have a specific health implication such individuals with sedentary lifestyle, active individuals with good cardiovascular health, individuals with moderate phyiscal activity, individuals with lower cardiovascular demands, and individuals that are active with potential stress affecting heart rate.
+Interpretation: We can see that there are 5 clusters, each cluster may have a specific health implications.
