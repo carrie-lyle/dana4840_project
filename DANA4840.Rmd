@@ -544,4 +544,4 @@ fviz_cluster(pam.res,
              ggtheme = theme_classic()
              )
 ```
-Interpretation: We can see that there are 5 clusters, each cluster may have a specific health implications.
+Interpretation: We can see that there are 6 clusters, each cluster may have specific health implications.
