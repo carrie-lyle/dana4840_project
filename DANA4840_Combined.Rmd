@@ -1,6 +1,5 @@
 ---
-title: "DANA4840_Combined"
-author: "Carrie Calaca"
+title: "DANA4840_project"
 date: "`r Sys.Date()`"
 output:
   word_document: default
@@ -8,27 +7,46 @@ output:
 ---
 
 # Read Data
-
 ```{r}
 sleep = read.csv("Sleep_health_and_lifestyle_dataset.csv")
-View(sleep)
 ```
 
+# Scale Data
+```{r}
+library(clValid)
+library(cluster)
+# - remove categorical variables and scale
+df_sleep <- scale(sleep[, c("Age","Sleep.Duration","Quality.of.Sleep","Physical.Activity.Level","Stress.Level","Heart.Rate","Daily.Steps")])
+```
 
+# Hopkins Statistic
+```{r}
+library(factoextra)
+set.seed(123)
+res_sleep <- get_clust_tendency(df_sleep, n = nrow(df_sleep)-1, graph = FALSE)
+res_sleep$hopkins_stat
+```
 
-#EDA CODES:
+Interpretation: It can be seen that the sleep data set is highly clusterable (the H value = 0.87 which is far above the threshold 0.5).
 
-#1.Checking missingness in the dataset.
+# Visual Methods
+```{r}
+fviz_dist(dist(df_sleep), show_labels = FALSE)+
+  labs(title = "Sleep")
+```
+Interpretation: The dissimilarity matrix image confirms that there is a cluster structure in the sleep dataset.
+
+# Missing Values
 ```{r}
 missing_data <- colSums(is.na(sleep))
 missing_data_df <- data.frame(Column = names(missing_data), Missing = missing_data)
 
 print(missing_data_df)
 ```
-#There are no missing values in the dataset.
+Interpretation: There are no missing values in the dataset.
 
 
-#2. Correlation 
+# Correlation 
 ```{r}
 # Set the diagonal elements to NA to avoid considering correlations of variables with themselves
 diag(correlation_matrix) <- NA
@@ -47,26 +65,24 @@ min_correlation_vars <- unique(colnames(correlation_matrix)[min_correlation_indi
 cat("Highest correlation:", max_correlation, "between variables:", paste(max_correlation_vars, collapse = " and "), "\n")
 cat("Lowest correlation:", min_correlation, "between variables:", paste(min_correlation_vars, collapse = " and "), "\n")
 ```
-##Highest correlation: 0.883213 between variables: Quality.of.Sleep and Sleep.Duration 
-#Lowest correlation: -0.898752 between variables: Stress.Level and Quality.of.Sleep 
 
+Interpretation: The variables with the highest correlation are Quality of Sleep and Sleep Duration with 0.883213 while the ones with the lowest correlation/negative correlation is Stress Level and Quality of Sleep with -0.909752.
 
-# boxplot for quality of sleep
+# Boxplots
+## Quality of Sleep
 ```{r}
 quality_of_sleep <- sleep$Quality.of.Sleep
 mean(quality_of_sleep) 
 median(quality_of_sleep) 
 sd(quality_of_sleep)
 IQR(quality_of_sleep)
-
 ```
+
 ```{r}
 boxplot(quality_of_sleep, col="pink", xlab="quality_of_sleep", ylab = " frequency", main = "Distribution of Quality Of Sleep")
 ```
 
-
-
-#boxplot for stress level
+## Stress Level
 
 ```{r}
 Stress_level <- sleep$Stress.Level
@@ -77,27 +93,29 @@ IQR(Stress_level)
 
 ```
 ```{r}
-boxplot(Stress_level, col="green", xlab="Strees Level", ylab = " frequency", main = "Distribution of Stress Level")
+boxplot(Stress_level, col="green", xlab="Stress Level", ylab = " frequency", main = "Distribution of Stress Level")
 ```
-
+# Objectives
 #1. How do sleep duration, quality of sleep, and sleep disorders vary across different demographic groups (gender, age, occupation)?
 
-
-##NEED TO ENTER THIS INTO PPT
 ## Summary Statistics by Gender
 ```{r}
 # Mean sleep duration and quality of sleep by gender
 aggregate(cbind(Sleep.Duration, Quality.of.Sleep) ~ Gender, data = sleep, FUN = mean)
 ```
+Interpretation: Sleep Duration and Quality: Females sleep more (7.23h) with better quality (7.66) than males (7.04h, 6.97 quality), indicating gender differences in sleep patterns.
+
 
 ```{r}
 # Sleep disorder prevalence by gender
 with(sleep, table(Gender, Sleep.Disorder))
 ```
+Interpretation: Sleep Disorder Prevalence: More females report insomnia and sleep apnea, but a higher number of males have no sleep disorder, highlighting gender differences in sleep health.
+
 ## Summary Statistics by Age Group
 ```{r}
-sleep$Age_Group <- cut(sleep$Age, breaks = c(0, 25, 35, 45, 55, 65, Inf), 
-                       labels = c("0-25", "26-35", "36-45", "46-55", "56-65", "65+"), 
+sleep$Age_Group <- cut(sleep$Age, breaks = c(25, 35, 45, 55, Inf), 
+                       labels = c("26-35", "36-45", "46-55", "56-65"), 
                        right = FALSE)
 ```
 
@@ -106,39 +124,28 @@ sleep$Age_Group <- cut(sleep$Age, breaks = c(0, 25, 35, 45, 55, 65, Inf),
 aggregate(cbind(Sleep.Duration, Quality.of.Sleep) ~ Age_Group, data = sleep, FUN = mean)
 ```
 
+Interpretation: Older adults (56-65) get the most sleep (8.1h) and highest quality (9.0), suggesting sleep improves with age.
+
 ```{r}
 # Sleep disorder prevalence by age group
 with(sleep, table(Age_Group, Sleep.Disorder))
 ```
-## Summary Statistics by Occupation
+Interpretation: Prevalence varies by age, with a notable increase in sleep apnea in older age groups (46-55, 56-65).
 
+## Summary Statistics by Occupation
 ```{r}
 # Mean sleep duration and quality of sleep by occupation
 aggregate(cbind(Sleep.Duration, Quality.of.Sleep) ~ Occupation, data = sleep, FUN = mean)
 ```
+Interpretation: Sleep varies by job; engineers sleep the longest (7.99h) and best (8.41 quality), while sales reps have the least (5.9h) and worst quality (4.0).
 
 ```{r}
 # Sleep disorder prevalence by occupation
 with(sleep, table(Occupation, Sleep.Disorder))
 ```
-##INTERPETATION: 
-#Gender Analysis:
-#Sleep Duration and Quality: Females sleep more (7.23h) with better quality (7.66) than males (7.04h, 6.97 quality), indicating gender differences in sleep patterns.
-#Sleep Disorder Prevalence: More females report insomnia and sleep apnea, but a higher number of males have no sleep disorder, highlighting gendered differences in sleep health.
-#Age Group Analysis:
-#Sleep Duration and Quality: Older adults (56-65) get the most sleep (8.1h) and highest quality (9.0), suggesting sleep improves with age.
-#Sleep Disorder Prevalence: Prevalence varies by age, with a notable increase in sleep apnea in older age groups (46-55, 56-65).
-#Occupation Analysis:
-#Sleep Duration and Quality: Sleep varies by job; engineers sleep the longest (7.99h) and best (8.41 quality), while sales reps have the least (5.9h) and worst quality (4.0).
-#Sleep Disorder Prevalence: Nurses report many sleep apnea cases, and sleep disorder reports vary widely by profession, indicating occupation impacts on sleep health.
+Interpretation: Nurses report many sleep apnea cases, and sleep disorder reports vary widely by profession, indicating occupation impacts on sleep health.
 
-
-
-
-
-
-
-## Visualization
+## Visualizations
 ### Sleep Duration by Gender
 ```{r}
 library(ggplot2)
@@ -148,14 +155,7 @@ ggplot(sleep, aes(x = Gender, y = Sleep.Duration, fill = Gender)) +
   labs(title = "Sleep Duration by Gender", y = "Sleep Duration (hours)", x = "") +
   theme_minimal()
 ```
-#he boxplot shows females generally have a higher median sleep duration than males, with a slightly greater spread in the data, indicating more variation in sleep patterns among females.
-
-
-
-
-
-
-
+Interpretation: The boxplot shows females generally have a higher median sleep duration than males, with a slightly greater spread in the data, indicating more variation in sleep patterns among females.
 
 ### Sleep Duration by Age Group
 ```{r}
@@ -166,7 +166,7 @@ ggplot(sleep, aes(x = Age_Group, y = Sleep.Duration, fill = Age_Group)) +
   labs(title = "Sleep Duration by Age Group", y = "Sleep Duration (hours)", x = "") +
   theme_minimal()
 ```
-#The boxplot indicates that sleep duration increases with age, with the 56-65 age group having the highest median sleep duration and the 26-35 age group the lowest.
+Interpretation: The boxplot indicates that sleep duration increases with age, with the 56-65 age group having the highest median sleep duration and the 26-35 age group the lowest.
 
 ### Sleep Duration by Occupation
 ```{r}
@@ -178,18 +178,18 @@ ggplot(sleep, aes(x = Occupation, y = Sleep.Duration, fill = Occupation)) +
   theme_minimal() + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-#The boxplot displays a variation in sleep duration by occupation, with engineers generally getting the most sleep and sales representatives the least, while other occupations show varying sleep patterns with some outliers.
+Interpretation: The boxplot displays a variation in sleep duration by occupation, with engineers generally getting the most sleep and sales representatives the least, while other occupations show varying sleep patterns with some outliers.
 
 
 ### Quality of Sleep by Gender
 ```{r}
-
 ggplot(sleep, aes(x = Gender, y = Quality.of.Sleep, fill = Gender)) + 
   geom_boxplot() + 
   labs(title = "Quality of Sleep by Gender", y = "Quality of Sleep", x = "") +
   theme_minimal()
 ```
-#Females report a higher median quality of sleep compared to males, with a tighter interquartile range suggesting less variability among females.
+
+Interpretation: Females report a higher median quality of sleep compared to males, with a tighter interquartile range suggesting less variability among females.
 
 
 ### Quality of Sleep by Age Group
@@ -201,26 +201,19 @@ ggplot(sleep, aes(x = Age_Group, y = Quality.of.Sleep, fill = Age_Group)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-#The boxplot suggests that the quality of sleep improves significantly with age, with the 46-55 age group reporting the highest median quality, and the youngest group (26-35) reporting the lowest.
+
+Interpretation: The boxplot suggests that the quality of sleep improves significantly with age, with the 46-55 age group reporting the highest median quality, and the youngest group (26-35) reporting the lowest.
 
 ### Quality of Sleep by Age Group
 ```{r}
-
 ggplot(sleep, aes(x = Occupation, y = Quality.of.Sleep, fill = Occupation)) + 
   geom_boxplot() + 
   labs(title = "Quality of Sleep by Occupation", y = "Quality of Sleep", x = "") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-#Engineers report the highest median quality of sleep among the occupations, while sales representatives and scientists show lower median values, indicating occupation may influence perceived sleep quality.
+Interpretation: Engineers report the highest median quality of sleep among the occupations, while sales representatives and scientists show lower median values, indicating occupation may influence perceived sleep quality.
 
-
-
-
-
-
-
-##Optional code
 ### Sleep Disorder Prevalence by Gender
 ```{r}
 ggplot(sleep, aes(x = Gender)) + 
@@ -229,11 +222,7 @@ ggplot(sleep, aes(x = Gender)) +
   theme_minimal() + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-#The bar chart shows that among the genders, males report a higher prevalence of no sleep disorder, while females have higher counts of both insomnia and sleep apnea.
-
-
-
-
+Interpretation: The bar chart shows that among the genders, males report a higher prevalence of no sleep disorder, while females have higher counts of both insomnia and sleep apnea.
 
 ### Sleep Disorder Prevalence by Age Group
 ```{r}
@@ -243,9 +232,7 @@ ggplot(sleep, aes(x = Age_Group)) +
   theme_minimal() + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-#The bar chart indicates that sleep disorders vary by age, with the 46-55 age group showing the highest prevalence of insomnia and the 56-65 age group showing a noticeable presence of sleep apnea.
-
-
+Interpretation: The bar chart indicates that sleep disorders vary by age, with the 46-55 age group showing the highest prevalence of insomnia and the 56-65 age group showing a noticeable presence of sleep apnea.
 
 ### Sleep Disorder Prevalence by Occupation
 ```{r}
@@ -255,8 +242,7 @@ ggplot(sleep, aes(x = Occupation)) +
   theme_minimal() + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-#The bar chart reveals that sleep disorder prevalence varies notably by occupation, with the highest incidence of reported sleep apnea in nurses and the most reported cases of insomnia in salespersons.
-
+Interpretation: The bar chart reveals that sleep disorder prevalence varies notably by occupation, with the highest incidence of reported sleep apnea in nurses and the most reported cases of insomnia in salespersons.
 
 
 #2. Is there a relationship between physical activity level, stress level, and sleep health indicators (sleep duration, quality of sleep) among individuals in the dataset?
@@ -266,16 +252,7 @@ ggplot(sleep, aes(x = Occupation)) +
 correlation_matrix <- cor(sleep[c("Physical.Activity.Level", "Stress.Level", "Sleep.Duration", "Quality.of.Sleep")])
 print(correlation_matrix)
 ```
-#The correlation matrix suggests a strong negative relationship between stress level and both sleep duration and quality of sleep, indicating higher stress is associated with shorter and poorer quality sleep. Physical activity level shows a small positive correlation with sleep duration and quality, suggesting that higher physical activity might be linked to slightly longer and better quality sleep.
-
-#not adding this graph
-```{r}
-library(corrplot)
-
-# Plot the correlation matrix
-corrplot(correlation_matrix, method = "circle", type = "upper", order = "hclust",
-         tl.col = "black", tl.cex = 0.6, tl.srt = 45)
-```
+Interpretation: The correlation matrix suggests a strong negative relationship between stress level and both sleep duration and quality of sleep, indicating higher stress is associated with shorter and poorer quality sleep. Physical activity level shows a small positive correlation with sleep duration and quality, suggesting that higher physical activity might be linked to slightly longer and better quality sleep.
 
 ## Regression Analysis:
 ### Sleep Duration
@@ -301,7 +278,7 @@ ggplot(sleep, aes(x = Physical.Activity.Level, y = Sleep.Duration, color = Stres
   theme_minimal() + 
   scale_color_gradient(low = "green", high = "red")
 ```
-#The scatterplot suggests a positive correlation between physical activity level and sleep duration, with higher activity levels associated with longer sleep. The color gradient indicates that individuals with lower stress levels tend to have higher physical activity and longer sleep duration.
+Interpretation: The scatterplot suggests a positive correlation between physical activity level and sleep duration, with higher activity levels associated with longer sleep. The color gradient indicates that individuals with lower stress levels tend to have higher physical activity and longer sleep duration.
 
 ```{r}
 ggplot(sleep, aes(x = Physical.Activity.Level, y = Quality.of.Sleep, color = Stress.Level)) +
@@ -312,18 +289,66 @@ ggplot(sleep, aes(x = Physical.Activity.Level, y = Quality.of.Sleep, color = Str
   theme_minimal() + 
   scale_color_gradient(low = "green", high = "red")
 ```
-#This scatterplot shows that as physical activity level increases, the quality of sleep also tends to improve. Additionally, individuals with lower stress levels generally experience higher quality of sleep, which correlates with higher physical activity levels.
+Interpretation: The scatterplot shows that as physical activity level increases, the quality of sleep also tends to improve. Additionally, individuals with lower stress levels generally experience higher quality of sleep, which correlates with higher physical activity levels.
 
 
 #3. Among all the clustering methods, which provides the most meaningful grouping of individuals based on their health and lifestyle profiles?
 
+## Optimal Clusters
+
+### Elbow Method
 ```{r}
-library(clValid)
-# - remove categorical variables and scale
-df_sleep <- scale(sleep[, c("Age","Sleep.Duration","Quality.of.Sleep","Physical.Activity.Level","Stress.Level","Heart.Rate","Daily.Steps")])
+#kmeans
+fviz_nbclust(df_sleep, kmeans, method = "wss") +
+    geom_vline(xintercept = 3, linetype = 2)+
+  labs(subtitle = "Elbow method")
+```
+```{r}
+#pam
+fviz_nbclust(df_sleep, pam, method = "wss") +
+    geom_vline(xintercept = 4, linetype = 2)+
+  labs(subtitle = "Elbow method")
+```
+```{r}
+#hierarchical
+fviz_nbclust(df_sleep, hcut, method = "wss") +
+    geom_vline(xintercept = 4, linetype = 2)+
+  labs(subtitle = "Elbow method")
 ```
 
-## Internal Measures
+### Silhouette method
+```{r}
+#kmeans
+fviz_nbclust(df_sleep, kmeans, method = "silhouette")+
+  labs(subtitle = "Silhouette method")
+```
+```{r}
+#pam
+fviz_nbclust(df_sleep, pam, method = "silhouette")+
+  labs(subtitle = "Silhouette method")
+```
+```{r}
+#hierarchical
+fviz_nbclust(df_sleep, hcut, method = "silhouette")+
+  labs(subtitle = "Silhouette method")
+```
+
+### Gap Statistic
+```{r}
+#kmeans
+set.seed(123)
+fviz_nbclust(df_sleep, kmeans, nstart = 25,  method = "gap_stat", nboot = 500)+
+  labs(subtitle = "Gap statistic method")
+```
+```{r}
+#hcut
+set.seed(123)
+fviz_nbclust(df_sleep, hcut, nstart = 25,  method = "gap_stat", nboot = 500)+
+  labs(subtitle = "Gap statistic method")
+```
+
+## Choosing Best Algorithm
+### Internal Measures
 ```{r}
 # Compute clValid
 clmethods <- c("hierarchical","kmeans","pam")
@@ -333,11 +358,9 @@ intern <- clValid(df_sleep, nClust = 2:6,
 # Summary
 summary(intern)
 ```
-#Hierarchical clustering with 2 clusters minimizes overlap, and with 6 clusters maximizes separation. PAM with 5 clusters provides the best overall cluster definition according to the silhouette score.
+Interpretation: Hierarchical clustering with 2 clusters minimizes overlap, and with 6 clusters maximizes separation. PAM with 5 clusters provides the best overall cluster definition according to the silhouette score.
 
-
-
-## Stability Measures
+### Stability Measures
 ```{r}
 # Stability measures
 clmethods <- c("hierarchical","kmeans","pam")
@@ -347,8 +370,7 @@ stab <- clValid(df_sleep, nClust = 2:6, clMethods = clmethods,
 # Display only optimal Scores
 optimalScores(stab)
 ```
-#The stability measures indicate that PAM clustering method with 4 and 6 clusters shows the best performance across various stability metrics (APN, AD, ADM, FOM). This suggests PAM provides consistent and reliable groupings for this dataset at these cluster sizes.
-
+Interpretation: The stability measures indicate that PAM clustering method with 4 and 6 clusters shows the best performance across various stability metrics (APN, AD, ADM, FOM). This suggests PAM provides consistent and reliable groupings for this dataset at these cluster sizes.
 
 ## Hierarchical
 ```{r}
@@ -366,7 +388,8 @@ fviz_dend(res.hc, k = 2, # Cut in 2 groups
           rect = TRUE # Add rectangle around groups
           )
 ```
-#The dendrogram from hierarchical clustering shows two distinct clusters when the data is cut at height 20, highlighted by the colors blue and yellow, indicating a possible meaningful division in the data at this level.
+
+Interpretation: The dendrogram from hierarchical clustering shows two distinct clusters when the data is cut at height 20, highlighted by the colors blue and yellow, indicating a possible meaningful division in the data at this level.
 
 
 ```{r}
@@ -377,7 +400,7 @@ fviz_cluster(list(data = df_sleep, cluster = grp),
              show.clust.cent = FALSE, ggtheme = theme_minimal())
 
 ```
-#The cluster plot visualizes two groups from hierarchical clustering, with significant overlap between clusters, suggesting that the clusters may not be distinctly separated in the space defined by the first two principal components.
+Interpretation: The cluster plot visualizes two groups from hierarchical clustering, with significant overlap between clusters, suggesting that the clusters may not be distinctly separated in the space defined by the first two principal components.
 
 
 #4. How do variables such as heart rate and daily steps contribute to the clustering of individuals?
@@ -393,14 +416,12 @@ scaled_sleep <- scale(sleep[, c("Heart.Rate", "Daily.Steps")])
 
 ## Internal Measures
 ```{r}
-
 intern2 <- clValid(scaled_sleep, nClust = 2:6, 
               clMethods = clmethods, validation = "internal")
 # Summary
 summary(intern2)
 ```
-#Our analysis scaled heart rate and daily steps, revealing through internal validation measures that PAM clustering with 3 clusters minimizes data connectivity, while k-means clustering with 6 clusters maximizes Dunn's index for separation, and PAM with 6 clusters provides the best silhouette value, indicating distinct and well-fitted clusters.
-
+Interpretation: Our analysis scaled heart rate and daily steps, revealing through internal validation measures that PAM clustering with 3 clusters minimizes data connectivity, while k-means clustering with 6 clusters maximizes Dunn's index for separation, and PAM with 6 clusters provides the best silhouette value, indicating distinct and well-fitted clusters.
 
 ## K-Means
 ```{r}
@@ -408,7 +429,7 @@ library(factoextra)
 fviz_nbclust(scaled_sleep, kmeans, method = "wss") +
     geom_vline(xintercept = 6, linetype = 2)
 ```
-#The elbow method for k-means clustering suggests that the total within sum of squares drastically decreases up to 6 clusters, beyond which the decrease is less pronounced, indicating that 6 clusters might be the optimal number for our data.
+Interpretation: The elbow method for k-means clustering suggests that the total within sum of squares drastically decreases up to 6 clusters, beyond which the decrease is less pronounced, indicating that 6 clusters might be the optimal number for our data.
 
 
 ```{r}
@@ -420,13 +441,12 @@ kmeans_sleep <- kmeans(scaled_sleep, centers = k)
 cluster_sleep <- kmeans_sleep$cluster
 ```
 
-
 ```{r}
 set.seed(123)
 km.res_sleep <- kmeans(scaled_sleep, 6, nstart = 25)
 print(km.res_sleep)
 ```
-#The k-means clustering results in 6 groups with various sizes, showing distinct cluster centers for heart rate and daily steps. The clusters are quite differentiated with a high percentage (94%) of the total variance explained between them, indicating a strong clustering structure
+Interpretation: The k-means clustering results in 6 groups with various sizes, showing distinct cluster centers for heart rate and daily steps. The clusters are quite differentiated with a high percentage (94%) of the total variance explained between them, indicating a strong clustering structure
 
 ```{r}
 ggplot(variables, aes(x = Heart.Rate, y = Daily.Steps, color = factor(cluster_sleep))) +
@@ -437,19 +457,32 @@ ggplot(variables, aes(x = Heart.Rate, y = Daily.Steps, color = factor(cluster_sl
        color = "Cluster") +
   theme_minimal()
 ```
-#The scatter plot shows the distribution of individuals into six clusters based on their heart rate and daily steps, with clear differentiation among clusters suggesting distinct groupings based on these two health and activity metrics.
-
+Interpretation: The scatter plot shows the distribution of individuals into six clusters based on their heart rate and daily steps, with clear differentiation among clusters suggesting distinct groupings based on these two health and activity metrics.
 
 ```{r}
 cluster_summary <- aggregate(variables, by = list(cluster_sleep), FUN = mean)
 colnames(cluster_summary) <- c("Cluster", "Mean.Heart.Rate", "Mean.Daily.Steps")
 print(cluster_summary)
 ```
-#The aggregation shows that cluster 1 has the highest average daily steps and a high mean heart rate, whereas cluster 6 has the highest mean heart rate but the lowest average daily steps, indicating varied health profiles across clusters.
+
+Interpretation: The aggregation shows that cluster 1 has the highest average daily steps and a high mean heart rate, whereas cluster 6 has the highest mean heart rate but the lowest average daily steps, indicating varied health profiles across clusters.
 
 ```{r}
 library(cluster)
 silhouette_score <- silhouette(cluster_sleep, dist(variables))
 print(summary(silhouette_score))
 ```
-#The silhouette scores indicate that clusters 3 and 5 have high cohesion and separation from others, whereas cluster 4 has a negative average silhouette width, suggesting that its units may be poorly matched to this cluster.
+Interpretation: The silhouette scores indicate that clusters 3 and 5 have high cohesion and separation from others, whereas cluster 4 has a negative average silhouette width, suggesting that its units may be poorly matched to this cluster.
+
+## PAM
+
+```{r}
+pam.res <- pam(scaled_sleep, 5)
+fviz_cluster(pam.res, 
+             palette = c("red", "orange","yellow","green","blue"), # color palette
+             ellipse.type = "t", # Concentration ellipse
+             repel = TRUE, # Avoid label overplotting (slow)
+             ggtheme = theme_classic()
+             )
+```
+
