@@ -136,6 +136,7 @@ ggplot(sleep, aes(x = Occupation, fill = Sleep.Disorder)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+Interpretation: Nurse' and 'Sales Representative' having a higher proportion of sleep apnea compared to others and for remaining the most occupations, the majority of individuals do not have a sleep disorder.
 
 # Objectives
 #1. How do sleep duration, quality of sleep, and sleep disorders vary across different demographic groups (gender, age, occupation)?
@@ -264,7 +265,7 @@ ggplot(sleep, aes(x = Gender)) +
   theme_minimal() + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-Interpretation: The bar chart shows that among the genders, males report a higher prevalence of no sleep disorder, while females have higher counts of both insomnia and sleep apnea.
+Interpretation: The bar chart shows that among the genders, males report a higher prevalence of no sleep disorder, while females have higher counts of sleep apnea.
 
 ### Sleep Disorder Prevalence by Age Group
 ```{r}
@@ -274,7 +275,7 @@ ggplot(sleep, aes(x = Age_Group)) +
   theme_minimal() + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-Interpretation: The bar chart indicates that sleep disorders vary by age, with the 46-55 age group showing the highest prevalence of insomnia and the 56-65 age group showing a noticeable presence of sleep apnea.
+Interpretation: The bar chart indicates that sleep disorders vary by age, with the 36-45 age group showing the highest prevalence of insomnia and the 26-35 age group showing the least prevalence of insomnia.
 
 ### Sleep Disorder Prevalence by Occupation
 ```{r}
